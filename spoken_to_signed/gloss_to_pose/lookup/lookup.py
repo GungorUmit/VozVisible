@@ -97,12 +97,13 @@ class PoseLookup:
         ]
 
         for dict_index, (spoken_language, signed_language, term) in lookup_list:
-            if spoken_language in dict_index:
-                if signed_language in dict_index[spoken_language]:
-                    lower_term = term.lower()
-                    if lower_term in dict_index[spoken_language][signed_language]:
-                        rows = dict_index[spoken_language][signed_language][lower_term]
-                        return PoseResult(pose=self.get_pose(self.get_best_row(rows, term)))
+            if term is not None:
+                if spoken_language in dict_index:
+                    if signed_language in dict_index[spoken_language]:
+                        lower_term = term.lower()
+                        if lower_term in dict_index[spoken_language][signed_language]:
+                            rows = dict_index[spoken_language][signed_language][lower_term]
+                            return PoseResult(pose=self.get_pose(self.get_best_row(rows, term)))
 
         # Backup strategy: revert to backup sign language
         if signed_language in LANGUAGE_BACKUP:
