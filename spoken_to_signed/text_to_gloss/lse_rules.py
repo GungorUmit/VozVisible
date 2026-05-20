@@ -151,6 +151,8 @@ _LEMMA_FIXES: dict[str, str] = {
     "preparado":  "preparar",
     # Interjection: Stanza lemmatizes "gracias" → "gracia"; fix for gloss map below
     "gracias":    "gracias",
+    # Override Stanza error where "pasen" is lemmatized to "par"
+    "pasen":      "pasar",
 }
 
 # Multi-word or fixed-form LSE glosses that override the default lemma.upper() path.
@@ -165,6 +167,24 @@ _LEMMA_TO_GLOSS: dict[str, str] = {
     "oír":     "ESCUCHAR",         # oír → ESCUCHAR (LSE convention)
     "temer":      "MIEDO",            # temer → MIEDO (noun sign, not verb)
     "casualidad": "CASUAL",           # casualidad → CASUAL (LSE lexical substitution)
+    # Custom mappings to reuse existing lexicon signs in transportation domain
+    "ir":             "",                  # remove auxiliary verb 'ir' to prevent missing pose
+    "disculpar":      "DISCULPEN",         # map to exact form in lexicon
+    "molestia":       "MOLESTIAS",         # map to exact form in lexicon
+    "cercanía":       "TREN",              # map cercanías to TREN (servicio tren)
+    "tener":          "TENGAN",            # map verb tener to TENGAN in lexicon
+    "trayecto":       "",                  # simplify final de trayecto -> final
+    "favor":          "",                  # simplify por favor -> empty
+    "correspondencia": "CORRESPONDER",     # map noun correspondencia to verb corresponder
+    "línea":          "LÍNEA",             # prevents LÍNEA-PL fallback
+    # Station names (proper nouns) simplified to ESTACIÓN or empty to avoid missing poses:
+    "atocha":         "ESTACIÓN",
+    "barcelona":      "ESTACIÓN",
+    "sol":            "ESTACIÓN",
+    "alcalá":         "ESTACIÓN",
+    "henares":        "",
+    "méndez":         "ESTACIÓN",
+    "álvaro":         "",
 }
 
 

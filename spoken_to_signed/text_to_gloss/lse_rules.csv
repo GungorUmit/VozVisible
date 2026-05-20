@@ -1,4 +1,4 @@
-﻿group,input,output,exclusive
+group,input,output,exclusive
 ,1_pp10s000 2_* 3_v0001s0,1_pp10s000 2_* 3_v0001s0,4
 ,1_* 2_v0001s0,0_YO 1_* 2_v0001s0,4
 ,1_pp20s000 2_* 3_v0002s0,1_pp20s000 2_* 3_v0002s0,5
@@ -155,7 +155,7 @@
 0.11,1_UNO 2_HORA,2_HORA,
 0.11,1_UNO 2_ALTERNATIVO,2_ALTERNATIVO,
 ,,,
-0.12,1_SU 2_noun,,
+0.12,1_SU 2_noun,2_noun,
 0.12,1_SU 2_ENTRADA,2_ENTRADA,
 0.12,1_SU 2_SALIDA,2_SALIDA,
 0.12,1_SU 2_LLAMADA,2_LLAMADA,
