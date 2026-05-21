@@ -38,6 +38,9 @@ Evaluar un traductor de LSE no consiste en alcanzar un 100% de similitud textual
 
 Este rendimiento se sitúa sólidamente dentro de los márgenes académicos (5-15% BLEU) esperables para este tipo de traducción textual-visual, validando nuestra arquitectura frente a riesgos de *overfitting*.
 
+<img width="1280" height="556" alt="ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/7f7dc26c-61f7-464d-ad80-d7c2aceadd8b" />
+
+
 ---
 
 ## 🌍 Impacto Social
