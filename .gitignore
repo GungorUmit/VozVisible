@@ -3,6 +3,11 @@ logs.db
 
 # Entorno virtual
 .venv/
+.venv310/
+.venv_video/
+
+# Seguridad y Claves
+secrets/
 
 # Python cache
 __pycache__/
