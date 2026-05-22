@@ -60,20 +60,20 @@ def async_generate_video(self, texto, slug, env):
         log_emission(texto, output_path)
         return {"status": "completed", "video_url": f"/{output_path}", "texto": texto, "cached": True}
 
-    # Disable fingerspelling fallback so missing words are skipped but shown in subtitles
-    cmd = [sys.executable, "generate_video.py", "--text", texto, "--output", output_path, "--glosser", "lse_rules", "--disable-fingerspelling"]
+    # Use backend_improvements.py (The "AI Mind") for processing
+    cmd = [sys.executable, "backend_improvements.py", "--text", texto, "--output", output_path]
 
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, timeout=120)
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, timeout=180)
         if os.path.exists(output_path):
             log_emission(texto, output_path)
             return {"status": "completed", "video_url": f"/{output_path}", "texto": texto}
         else:
-            return {"status": "failed", "error": "No se pudo generar el video."}
+            return {"status": "failed", "error": "No se pudo generar el video tras el proceso de IA."}
     except subprocess.CalledProcessError as e:
-        error_msg = f"Error en generación: {e.stderr}"
-        if "not found" in e.stderr or "Exception: No poses" in e.stderr:
-            error_msg = "Vocabulario insuficiente: algunas palabras no están en la base de datos LSE."
+        error_msg = f"Error en generación (IA): {e.stderr}"
+        if "No poses found" in e.stderr or "Exception: No poses" in e.stderr:
+            error_msg = "Vocabulario insuficiente: incluso tras la IA, algunas palabras no pudieron ser representadas."
         return {"status": "failed", "error": error_msg}
     except subprocess.TimeoutExpired:
-        return {"status": "failed", "error": "Tiempo de generación excedido."}
+        return {"status": "failed", "error": "Tiempo de generación excedido (la IA tardó demasiado)."}
