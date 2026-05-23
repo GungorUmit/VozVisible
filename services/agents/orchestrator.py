@@ -1,4 +1,5 @@
 import json
+import re
 from openai import OpenAI
 from .prompts import (
     SYSTEM_PROMPT_CONTEXT_AGENT,
@@ -30,6 +31,11 @@ def _call_agent(client, system_prompt: str, user_input: str, model=MODEL_FAST, t
         max_tokens=256
     )
     return response.choices[0].message.content.strip()
+
+
+def _normalize_gloss_output(raw_output: str) -> str:
+    tokens = re.findall(r"[A-Za-zÁÉÍÓÚÑáéíóúñ]+", raw_output)
+    return " ".join(token.upper() for token in tokens)
 
 def run_multi_agent_pipeline(raw_text: str, api_key: str, log_callback=None) -> dict:
     """
@@ -64,9 +70,9 @@ def run_multi_agent_pipeline(raw_text: str, api_key: str, log_callback=None) -> 
 
     # Bucle Adversarial (Traductor vs Crítico)
     log(f"Traduciendo a Lengua de Signos...", "traductor")
-    glosses = _call_agent(client, SYSTEM_PROMPT_LINGUIST_AGENT, clean_text, model=MODEL_SMART, temperature=0.1)
-    import re
-    glosses = " ".join(re.findall(r'[A-ZÁÉÍÓÚÑ]+', glosses))
+    glosses = _normalize_gloss_output(
+        _call_agent(client, SYSTEM_PROMPT_LINGUIST_AGENT, clean_text, model=MODEL_SMART, temperature=0.1)
+    )
     
     max_retries = 2
     for attempt in range(max_retries):
@@ -82,9 +88,9 @@ def run_multi_agent_pipeline(raw_text: str, api_key: str, log_callback=None) -> 
             log(f"Traducción RECHAZADA. Motivo: {critic_feedback}", "critico")
             log("Reescribiendo glosas para corregir el error...", "traductor")
             correction_prompt = f"Tu traducción anterior fue: '{glosses}'. El auditor sordo la ha RECHAZADO con este motivo: '{critic_feedback}'. Por favor, reescribe las glosas corrigiendo este error. Recuerda usar SOLO MAYÚSCULAS y separar por espacios. ESTRICTAMENTE DEVUELVE SOLO LAS GLOSAS, NINGUNA OTRA PALABRA NI EXPLICACIÓN."
-            glosses = _call_agent(client, SYSTEM_PROMPT_LINGUIST_AGENT, correction_prompt, model=MODEL_SMART, temperature=0.2)
-            import re
-            glosses = " ".join(re.findall(r'[A-ZÁÉÍÓÚÑ]+', glosses))
+            glosses = _normalize_gloss_output(
+                _call_agent(client, SYSTEM_PROMPT_LINGUIST_AGENT, correction_prompt, model=MODEL_SMART, temperature=0.2)
+            )
             
     return {
         "clean_text": clean_text,

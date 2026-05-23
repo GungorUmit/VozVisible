@@ -42,6 +42,11 @@ def main():
         if not gloss_str:
             print("Error: El orquestador no devolvió glosas.")
             sys.exit(1)
+
+        gloss_tokens = [token for token in gloss_str.split() if token.strip()]
+        if not gloss_tokens:
+            print("Error: La traducción no produjo glosas utilizables.")
+            sys.exit(1)
             
         print(f"\n--- TRADUCCIÓN FINAL ---")
         print(f"Glosas: {gloss_str}")
@@ -52,7 +57,6 @@ def main():
         # spoken_to_signed expects a list of Gloss (which is a list of GlossItem)
         from spoken_to_signed.text_to_gloss.types import GlossItem
         
-        gloss_tokens = gloss_str.split()
         sentence_glosses = []
         for token in gloss_tokens:
             # We use the token as both word and gloss for lookup
