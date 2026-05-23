@@ -16,8 +16,9 @@ echo "✅ Redis listo."
 
 # ── 2. Celery Worker ─────────────────────────────────────────
 echo "⚙️  Iniciando Celery Worker..."
-# Set generous time limits for long-running AI/video generation tasks
-CELERY_TIME_LIMIT=${CELERY_TIME_LIMIT:-600}
+# Set generous time limits for long-running AI/video generation tasks (default 900s)
+CELERY_TIME_LIMIT=${CELERY_TIME_LIMIT:-900}
+export AI_GENERATION_TIMEOUT=${AI_GENERATION_TIMEOUT:-900}
 celery -A tasks worker --loglevel=info --concurrency=2 --time-limit=${CELERY_TIME_LIMIT} &
 CELERY_PID=$!
 sleep 2
@@ -29,6 +30,6 @@ PORT=${PORT:-5002}
 exec gunicorn server:app \
   --bind "0.0.0.0:$PORT" \
   --workers 2 \
-  --timeout 600 \
+  --timeout 900 \
   --access-logfile - \
   --error-logfile -
