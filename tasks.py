@@ -5,6 +5,7 @@ import sqlite3
 import time
 import glob
 import logging
+import resource
 from celery import Celery
 
 celery_app = Celery(
@@ -31,6 +32,14 @@ def log_emission(texto, output_path):
     c.execute("INSERT INTO emissions (text, output_path) VALUES (?, ?)", (texto, output_path))
     conn.commit()
     conn.close()
+
+
+def _log_rss(logger, prefix):
+    try:
+        rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        logger.info(f"{prefix} rss_kb={rss_kb}")
+    except Exception:
+        pass
 
 
 @celery_app.task
@@ -78,6 +87,8 @@ def async_generate_video(self, texto, slug, env):
         except Exception:
             pass
 
+        _log_rss(logger, "before_subprocess")
+
         logger.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, timeout=timeout_seconds)
 
@@ -86,6 +97,7 @@ def async_generate_video(self, texto, slug, env):
             logger.info(f"Subprocess stdout: {result.stdout}")
         if result.stderr:
             logger.warning(f"Subprocess stderr: {result.stderr}")
+        _log_rss(logger, "after_subprocess")
 
         if os.path.exists(output_path):
             log_emission(texto, output_path)

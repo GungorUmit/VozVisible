@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import json
+import resource
 from pathlib import Path
 from services.agents.orchestrator import run_multi_agent_pipeline
 
@@ -17,6 +18,14 @@ def _build_sentence_glosses(gloss_tokens):
     from spoken_to_signed.text_to_gloss.types import GlossItem
 
     return [[GlossItem(word=token.lower(), gloss=token.lower()) for token in gloss_tokens]]
+
+
+def _log_rss(prefix):
+    try:
+        rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        print(f"[{prefix}] rss_kb={rss_kb}")
+    except Exception:
+        pass
 
 def main():
     parser = argparse.ArgumentParser(description="Generate LSE video using Multi-Agent AI Orchestrator")
@@ -36,6 +45,7 @@ def main():
     
     # 1. Run the Multi-Agent Pipeline
     try:
+        _log_rss("before_pipeline")
         # Note: run_multi_agent_pipeline returns {clean_text, glosses, speed}
         # we can pass a log_callback to see the "thoughts" of the agents
         def log_step(data):
@@ -44,6 +54,7 @@ def main():
             print(f"[{role}] {msg}")
 
         ai_result = run_multi_agent_pipeline(args.text, api_key, log_callback=log_step)
+        _log_rss("after_pipeline")
         
         gloss_str = ai_result.get("glosses")
         if not gloss_str:
@@ -74,6 +85,7 @@ def main():
                 "lse",
                 disable_fingerspelling=False
             )
+            _log_rss("after_lookup")
         except Exception as lookup_error:
             print(f"Aviso: fallo el lookup principal ({lookup_error}); usando fallback seguro.")
             fallback_sentences = _build_sentence_glosses([SAFE_FALLBACK_GLOSS])
@@ -84,9 +96,12 @@ def main():
                 "lse",
                 disable_fingerspelling=False
             )
+            _log_rss("after_fallback_lookup")
         
         # 4. Render Video
+        _log_rss("before_render")
         render_skeleton_video(result.pose, args.output)
+        _log_rss("after_render")
         print(f"Video generado exitosamente: {args.output}")
         
     except Exception as e:

@@ -66,6 +66,7 @@ pose-to-video @ git+https://github.com/sign-language-processing/pose-to-video@08
 pose_format==0.13.0
 preshed==3.0.13
 protobuf
+psutil==7.0.0
 pyasn1==0.6.3
 pyasn1_modules==0.4.2
 pycparser==3.0
