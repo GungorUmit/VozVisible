@@ -10,6 +10,13 @@ from spoken_to_signed.bin import _gloss_to_pose
 from render_skeleton_video import render_skeleton_video
 
 DEFAULT_LEXICON = Path("spoken_to_signed/assets/lse_lexicon")
+SAFE_FALLBACK_GLOSS = "HOLA"
+
+
+def _build_sentence_glosses(gloss_tokens):
+    from spoken_to_signed.text_to_gloss.types import GlossItem
+
+    return [[GlossItem(word=token.lower(), gloss=token.lower()) for token in gloss_tokens]]
 
 def main():
     parser = argparse.ArgumentParser(description="Generate LSE video using Multi-Agent AI Orchestrator")
@@ -45,36 +52,38 @@ def main():
 
         gloss_tokens = [token for token in gloss_str.split() if token.strip()]
         if not gloss_tokens:
-            print("Error: La traducción no produjo glosas utilizables.")
-            sys.exit(1)
+            print("Aviso: la traducción no produjo glosas utilizables; usando fallback seguro.")
+            gloss_tokens = [SAFE_FALLBACK_GLOSS]
             
         print(f"\n--- TRADUCCIÓN FINAL ---")
         print(f"Glosas: {gloss_str}")
         print(f"Velocidad: {ai_result.get('speed')}x")
         
         # 2. Convert Glosses to Pose
-        # We need to simulate the Gloss structure expected by _gloss_to_pose
-        # spoken_to_signed expects a list of Gloss (which is a list of GlossItem)
-        from spoken_to_signed.text_to_gloss.types import GlossItem
-        
-        sentence_glosses = []
-        for token in gloss_tokens:
-            # We use the token as both word and gloss for lookup
-            sentence_glosses.append(GlossItem(word=token.lower(), gloss=token.lower()))
-            
-        sentences = [sentence_glosses]
+        sentences = _build_sentence_glosses(gloss_tokens)
         
         # 3. Lookup and Generate Pose
         # We use disable_fingerspelling=False by default to allow fallback if AI gloss isnt in lexicon
         # although the AI tries to use known glosses.
         lexicon_path = str(DEFAULT_LEXICON)
-        result = _gloss_to_pose(
-            sentences,
-            lexicon_path,
-            "es",
-            "lse",
-            disable_fingerspelling=False
-        )
+        try:
+            result = _gloss_to_pose(
+                sentences,
+                lexicon_path,
+                "es",
+                "lse",
+                disable_fingerspelling=False
+            )
+        except Exception as lookup_error:
+            print(f"Aviso: fallo el lookup principal ({lookup_error}); usando fallback seguro.")
+            fallback_sentences = _build_sentence_glosses([SAFE_FALLBACK_GLOSS])
+            result = _gloss_to_pose(
+                fallback_sentences,
+                lexicon_path,
+                "es",
+                "lse",
+                disable_fingerspelling=False
+            )
         
         # 4. Render Video
         render_skeleton_video(result.pose, args.output)
