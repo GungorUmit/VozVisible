@@ -24,10 +24,25 @@ SECRETS_DIR = Path('secrets')
 SECRETS_DIR.mkdir(exist_ok=True)
 FERNET_PATH = SECRETS_DIR / 'fernet.key'
 if CRYPTO_AVAILABLE:
-    if not FERNET_PATH.exists():
-        FERNET_PATH.write_bytes(Fernet.generate_key())
-    FERNET_KEY = FERNET_PATH.read_bytes()
-    FERNET = Fernet(FERNET_KEY)
+    def _load_or_create_fernet():
+        try:
+            if not FERNET_PATH.exists():
+                key = Fernet.generate_key()
+                FERNET_PATH.write_bytes(key)
+                return Fernet(key)
+
+            key = FERNET_PATH.read_bytes().strip()
+            try:
+                return Fernet(key)
+            except Exception:
+                # Legacy or corrupt key: regenerate so the service can boot.
+                key = Fernet.generate_key()
+                FERNET_PATH.write_bytes(key)
+                return Fernet(key)
+        except Exception:
+            return None
+
+    FERNET = _load_or_create_fernet()
 else:
     FERNET = None
 
