@@ -2,10 +2,11 @@ from .common import load_spacy_model
 from .types import Gloss, GlossItem
 
 LANGUAGE_MODELS_SPACY = {
-    "de": "de_core_news_lg",
-    "fr": "fr_core_news_lg",
-    "it": "it_core_news_lg",
-    "en": "en_core_web_lg",
+    "de": ("de_core_news_lg",),
+    "fr": ("fr_core_news_lg",),
+    "it": ("it_core_news_lg",),
+    "en": ("en_core_web_lg",),
+    "es": ("es_core_news_md",),
 }
 
 

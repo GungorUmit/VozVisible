@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VozVisible | Terminal de Control de Andén</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                "primary": "#e0fdff", "surface-container": "#1a1f2e", "surface-dim": "#0e1321",
+                "on-surface": "#dee2f6", "error": "#ffb4ab", "surface": "#0e1321",
+                "surface-container-low": "#161b2a", "surface-container-lowest": "#090e1c",
+                "primary-container": "#00f2fe", "surface-container-high": "#252a39",
+                "on-primary-container": "#006a70", "tertiary-fixed-dim": "#ffba27",
+                "background": "#0e1321", "on-background": "#dee2f6", "outline": "#849495",
+                "outline-variant": "#3a494b", "surface-container-highest": "#303444",
+                "surface-variant": "#303444",
+            },
+            fontFamily: {
+                "label-caps": ["JetBrains Mono"], "body-md": ["Sora"],
+                "display-sm": ["Space Grotesk"], "data-point": ["JetBrains Mono"],
+                "headline-md": ["Space Grotesk"], "display-lg": ["Space Grotesk"]
+            },
+            fontSize: {
+                "label-caps": ["12px", { lineHeight: "1.0", letterSpacing: "0.1em", fontWeight: "700" }],
+                "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+                "display-sm": ["32px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" }],
+                "data-point": ["20px", { lineHeight: "1.0", fontWeight: "500" }],
+                "headline-md": ["24px", { lineHeight: "1.3", fontWeight: "500" }],
+            }
+        }
+    }
+}
+</script>
+<style>
+.glass-panel { background-color: rgba(26,31,46,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(132,148,149,0.2); }
+.neon-glow-primary { box-shadow: 0 0 15px rgba(0,242,254,0.5); }
+.neon-glow-error { box-shadow: 0 0 15px rgba(255,180,171,0.5); }
+.neon-glow-warning { box-shadow: 0 0 15px rgba(255,186,39,0.5); }
+.card-active { transform: scale(0.97); box-shadow: 0 0 20px rgba(0,242,254,0.6); border: 2px solid #00f2fe !important; }
+.spinner { border: 3px solid rgba(0,242,254,0.2); border-top: 3px solid #00f2fe; border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.pulse-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.tab-active { color: #00f2fe; border-bottom: 2px solid #00f2fe; background: rgba(0,242,254,0.08); }
+.tab-inactive { color: #849495; }
+.tab-inactive:hover { background: rgba(0,242,254,0.05); color: #dee2f6; }
+.phrase-card { transition: all 0.2s ease; cursor: pointer; }
+.phrase-card:hover { background: rgba(0,242,254,0.06); border-color: rgba(0,242,254,0.3); }
+.subtitle-fade { transition: opacity 0.5s ease; opacity: 0; }
+.subtitle-fade.visible { opacity: 1; }
+.idle-avatar { animation: breath 4s ease-in-out infinite; }
+@keyframes breath {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+}
+/* Estilos para el texto de feedback Custom */
+.text-feedback-fade { animation: fadeInOut 2s ease forwards; }
+@keyframes fadeInOut { 0% {opacity:0} 20% {opacity:1} 80% {opacity:1} 100% {opacity:0} }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col overflow-x-hidden">
+
+<!-- HEADER BANNER (OFFICIAL MOCKUP) -->
+<header class="relative w-full h-auto overflow-hidden border-b border-primary/40 shadow-2xl z-50 bg-[#0d1117]">
+    <!-- Official Mockup Banner -->
+    <img src="/assets/header_banner_official.png" alt="VozVisible Official Banner" class="w-full h-auto block"/>
+    
+    <!-- Dark overlay to blend edges if needed -->
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+    
+    <!-- API Key Key Icon (floating right) -->
+    <button onclick="document.getElementById('apiModal').classList.toggle('hidden')" class="absolute top-4 right-6 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition" title="Configurar API Key">
+        <span class="material-symbols-outlined text-xl">key</span>
+    </button>
+</header>
+
+<!-- API Key Modal -->
+<div id="apiModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+<div class="glass-panel rounded-xl p-8 w-96 flex flex-col gap-4" style="pointer-events:auto;">
+    <h3 class="font-headline-md text-primary-container">Configuración API</h3>
+    <input id="apiKeyInput" type="password" placeholder="Groq API Key" class="bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-4 py-3 text-on-surface focus:border-primary-container outline-none"/>
+    <div class="flex gap-3">
+        <button id="apiSaveBtn" type="button" class="flex-1 bg-primary-container text-on-primary-container font-bold py-2 rounded-lg hover:opacity-90 transition">Guardar</button>
+        <button id="apiCloseBtn" type="button" class="flex-1 border border-outline-variant text-outline py-2 rounded-lg hover:bg-surface-container transition">Cerrar</button>
+    </div>
+</div>
+</div>
+
+<!-- SUB-HEADER: STATUS BAR -->
+<div class="bg-surface-container-low border-b border-outline-variant/30 px-6 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+            <span class="font-label-caps text-[10px] tracking-[0.3em] text-primary">SISTEMA ACTIVO</span>
+        </div>
+        <div class="h-4 w-px bg-outline-variant/30"></div>
+        <h2 class="font-display-sm text-[10px] tracking-[0.4em] text-outline uppercase">Terminal de Control | VozVisible</h2>
+    </div>
+    <div class="hidden md:flex items-center gap-6">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm text-outline">calendar_today</span>
+            <span id="currentDate" class="font-data-point text-[10px] text-outline uppercase"></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm text-outline">schedule</span>
+            <span id="currentTime" class="font-data-point text-[10px] text-outline"></span>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<main class="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-hidden">
+
+<!-- LEFT SIDEBAR: Transport Categories -->
+<aside class="lg:w-64 flex-shrink-0 flex flex-col gap-2">
+    <!-- Custom Text Input (MOVIDO ARRIBA) -->
+    <div class="mb-4 flex flex-col gap-2 bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 shadow-lg">
+        <h3 class="font-label-caps text-label-caps text-primary-container flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">edit_note</span> AVISO PERSONALIZADO
+        </h3>
+        <textarea id="customText" rows="3" placeholder="Aviso imprevisto..." class="bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-3 py-2 text-on-surface focus:border-primary-container outline-none text-sm w-full resize-none leading-relaxed"></textarea>
+        <!-- Mini feedback de estado -->
+        <span id="customFeedback" class="text-[10px] text-outline hidden">Comprobando glosas...</span>
+        <button onclick="emitirCustom()" class="bg-primary-container text-on-primary-container font-bold py-2 rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-2 w-full mt-1">
+            <span class="material-symbols-outlined text-base">send</span> Emitir
+        </button>
+    </div>
+
+    <h3 class="font-label-caps text-label-caps text-outline mb-1 px-1">RED DE TRANSPORTE</h3>
+    <button onclick="switchTab('cercanias')" id="tab-cercanias" class="tab-active flex items-center gap-3 px-4 py-3 rounded-xl font-headline-md text-sm transition-all w-full text-left">
+        <img src="/assets/logo_cercanias.png" alt="Cercanías" class="h-11 w-11 object-contain rounded flex-shrink-0"/>
+        <span>Renfe Cercanías</span>
+    </button>
+    <button onclick="switchTab('ave')" id="tab-ave" class="tab-inactive flex items-center gap-3 px-4 py-3 rounded-xl font-headline-md text-sm transition-all w-full text-left">
+        <img src="/assets/logo_renfe.png" alt="Renfe" class="h-14 w-14 object-contain rounded flex-shrink-0"/>
+        <span>Renfe y AVE</span>
+    </button>
+    <button onclick="switchTab('metro')" id="tab-metro" class="tab-inactive flex items-center gap-3 px-4 py-3 rounded-xl font-headline-md text-sm transition-all w-full text-left">
+        <img src="/assets/logo_metro_madrid.png" alt="Metro" class="h-14 w-14 object-contain rounded flex-shrink-0"/>
+        <span>Metro de Madrid</span>
+    </button>
+    
+    <!-- WhatsApp Channel Banner (REMOVED) -->
+
+    <!-- Log -->
+    <!-- Log / Agent Console -->
+    <div class="mt-auto pt-4 border-t border-outline-variant/30 flex flex-col min-h-[160px]">
+        <h3 class="font-label-caps text-label-caps text-outline mb-2 px-1 flex items-center justify-between">
+            <span>MENTE DE LA IA</span>
+            <span class="text-[9px] text-[#25D366] font-mono tracking-widest animate-pulse">● LIVE</span>
+        </h3>
+        <div id="emissionLog" class="flex flex-col gap-1.5 flex-1 max-h-48 overflow-y-auto custom-scrollbar font-mono">
+            <div class="text-outline/40 text-xs text-center py-4">Esperando nueva emisión...</div>
+        </div>
+    </div>
+</aside>
+
+<!-- RIGHT: Monitor (hero) + Phrase Cards (controls) -->
+<div class="flex-1 flex flex-col gap-4 min-w-0">
+
+    <!-- Live Monitor (HERO - arriba) -->
+    <section id="monitorSection" class="glass-panel rounded-xl p-2 w-full aspect-video max-h-[600px] border border-primary/20 relative overflow-hidden transition-all duration-300">
+        <div class="h-full bg-surface-container-lowest rounded-lg border border-outline-variant/50 flex flex-col lg:flex-row overflow-hidden relative" id="monitorContainer">
+            <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,242,254,0.03)_50%)] bg-[length:100%_4px] opacity-50 z-10"></div>
+            
+            <!-- Fullscreen Button -->
+            <div class="absolute top-3 right-3 flex items-center gap-2 z-40">
+                <button onclick="toggleFullscreen()" class="bg-black/50 p-2 rounded-full hover:bg-black/80 text-white transition border border-white/10" title="Ver en pantalla completa">
+                    <span class="material-symbols-outlined text-sm" id="fsIcon">fullscreen</span>
+                </button>
+            </div>
+
+            <!-- Left: Text -->
+            <div class="lg:w-1/3 h-full p-6 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-outline-variant/30 relative">
+                <div class="absolute top-3 left-3 flex items-center gap-2">
+                    <span id="statusDot" class="w-2 h-2 rounded-full bg-outline"></span>
+                    <span id="statusLabel" class="font-label-caps text-label-caps text-outline">SISTEMA EN ESPERA</span>
+                </div>
+                <div id="loadingSpinner" class="hidden absolute inset-0 flex items-center justify-center z-20 bg-surface-container-lowest/80" aria-live="assertive" role="alert" aria-busy="true">
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="spinner"></div>
+                        <span class="font-label-caps text-label-caps text-primary-container" id="loadingText">GLOSANDO TEXTO Y GENERANDO LSE...</span>
+                    </div>
+                </div>
+                <p id="monitor-text" class="font-data-point text-lg md:text-xl leading-tight text-outline uppercase tracking-wider break-words text-center lg:text-left" aria-live="polite">
+                    SELECCIONE UN AVISO PARA EMITIR
+                </p>
+            </div>
+            <!-- Right: Video (protagonista) -->
+            <div class="lg:w-2/3 h-full relative bg-black flex items-center justify-center overflow-hidden w-full">
+                <div id="liveBadge" class="hidden absolute top-3 right-14 z-20 bg-error/20 border border-error px-3 py-1 rounded-full flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-error pulse-dot"></span>
+                    <span class="font-label-caps text-label-caps text-error">EMITIENDO</span>
+                </div>
+                <div id="videoPlaceholder" class="flex flex-col items-center gap-3 text-outline/50 idle-avatar">
+                    <span class="material-symbols-outlined text-6xl text-primary-container/40">accessibility_new</span>
+                    <span class="font-label-caps text-label-caps text-primary-container/40">SISTEMA LSE EN ESPERA</span>
+                </div>
+                <video id="videoPlayer" class="hidden w-full h-full object-contain" autoplay loop muted playsinline aria-label="Avatar virtual interpretando en Lengua de Signos Española (LSE)"></video>
+                <!-- Subtítulo de lugares (sobre el vídeo) -->
+                <div id="subtitleBar" class="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 py-4 pt-8 subtitle-fade pointer-events-none">
+                    <p id="subtitleText" class="font-headline-md text-lg text-tertiary-fixed-dim text-center drop-shadow-lg uppercase"></p>
+                </div>
+                <div class="absolute inset-0 border-2 border-primary/10 m-2 rounded pointer-events-none"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- PHRASE CARDS (controles debajo) -->
+    <section id="panel-cercanias" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button onclick="emitirAviso('cercanias_1', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-tertiary-fixed-dim">departure_board</span>
+                <span class="font-label-caps text-label-caps text-tertiary-fixed-dim">SALIDA</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"El tren con destino Atocha va a efectuar su salida."</p>
+        </button>
+        <button onclick="emitirAviso('cercanias_2', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-primary-container">location_on</span>
+                <span class="font-label-caps text-label-caps text-primary-container">PRÓXIMA PARADA</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Tren con destino Alcalá de Henares. Próxima parada: Méndez Álvaro."</p>
+        </button>
+        <button onclick="emitirAviso('cercanias_3', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-error">build</span>
+                <span class="font-label-caps text-label-caps text-error">INCIDENCIA</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Disculpen las molestias. El servicio de cercanías está interrumpido por avería."</p>
+        </button>
+    </section>
+
+    <section id="panel-ave" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button onclick="emitirAviso('ave_1', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-tertiary-fixed-dim">departure_board</span>
+                <span class="font-label-caps text-label-caps text-tertiary-fixed-dim">SALIDA AVE</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"El tren con destino Barcelona va a efectuar su salida por vía dos."</p>
+        </button>
+        <button onclick="emitirAviso('ave_2', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-error">warning</span>
+                <span class="font-label-caps text-label-caps text-error">SEGURIDAD</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Por su seguridad, no pasen de la línea amarilla del andén."</p>
+        </button>
+        <button onclick="emitirAviso('ave_3', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-primary-container">login</span>
+                <span class="font-label-caps text-label-caps text-primary-container">ENTRADA</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Atención, el tren va a efectuar su entrada por vía uno."</p>
+        </button>
+    </section>
+
+    <section id="panel-metro" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3">
+        <button onclick="emitirAviso('metro_1', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-primary-container">location_on</span>
+                <span class="font-label-caps text-label-caps text-primary-container">PRÓXIMA ESTACIÓN</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Próxima estación: Sol. Correspondencia con líneas uno y tres."</p>
+        </button>
+        <button onclick="emitirAviso('metro_2', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-tertiary-fixed-dim">last_page</span>
+                <span class="font-label-caps text-label-caps text-tertiary-fixed-dim">FINAL DE TRAYECTO</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Final de trayecto. Por favor, desalojen el tren."</p>
+        </button>
+        <button onclick="emitirAviso('metro_3', this)" class="phrase-card action-card glass-panel rounded-xl p-4 flex flex-col gap-2 text-left">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-error">warning</span>
+                <span class="font-label-caps text-label-caps text-error">ESTACIÓN EN CURVA</span>
+            </div>
+            <p class="text-on-surface text-sm leading-relaxed uppercase">"Estación en curva. Tengan cuidado para no introducir el pie entre coche y andén."</p>
+        </button>
+    </section>
+
+    <!-- Stop button inline -->
+    <div class="flex justify-center">
+        <button onclick="detenerMegafonia()" class="bg-error/10 border-2 border-error text-error hover:bg-error hover:text-black hover:neon-glow-error transition-all duration-300 rounded-full py-2.5 px-8 font-display-sm text-sm flex items-center gap-3 active:scale-95">
+            <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">front_hand</span>
+            DETENER MEGAFONÍA
+        </button>
+    </div>
+
+    <!-- THREE COLUMNS FOR FEEDS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
+        <!-- 📡 RENFE ALERTAS EN TIEMPO REAL -->
+        <section class="glass-panel rounded-xl p-4 border border-error/20 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <img src="/assets/logo_cercanias.png" alt="Cercanías" class="h-6 w-6 object-contain rounded"/>
+                    <h3 class="font-headline-md text-sm text-on-surface">Alertas Cercanías</h3>
+                    <span id="alertBadge" class="bg-error/20 text-error text-xs font-bold px-2 py-0.5 rounded-full">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="alertPulse" class="w-2 h-2 rounded-full bg-error/50"></span>
+                    <span id="alertTime" class="text-outline text-xs">Cargando...</span>
+                    <button onclick="loadAlerts()" class="text-outline hover:text-primary-container transition p-1" title="Actualizar">
+                        <span class="material-symbols-outlined text-lg">refresh</span>
+                    </button>
+                </div>
+            </div>
+            <div id="alertsList" class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                <div class="text-outline/40 text-xs text-center py-4">Conectando con Renfe Data...</div>
+            </div>
+        </section>
+        
+        <!-- 📱 WHATSAPP CANAL OFICIAL -->
+        <section class="glass-panel rounded-xl p-4 border border-[#25D366]/20 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <img src="/assets/logo_cercanias.png" alt="Cercanías" class="h-6 w-6 object-contain rounded"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    <h3 class="font-headline-md text-sm text-[#25D366]">Canal WhatsApp Cercanías</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#25D366] pulse-dot"></span>
+                    <button onclick="loadWhatsapp()" class="text-outline hover:text-[#25D366] transition p-1" title="Actualizar">
+                        <span class="material-symbols-outlined text-lg">refresh</span>
+                    </button>
+                </div>
+            </div>
+            <div id="whatsappList" class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                <div class="text-outline/40 text-xs text-center py-4">Conectando con WhatsApp...</div>
+            </div>
+        </section>
+
+        <!-- 📱 METRO MADRID X -->
+        <section class="glass-panel rounded-xl p-4 border border-[#1DA1F2]/20 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <img src="/assets/logo_metro_madrid.png" alt="Metro Madrid" class="h-6 w-6 object-contain rounded"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-on-surface" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    <h3 class="font-headline-md text-sm text-on-surface">Metro de Madrid</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-on-surface pulse-dot"></span>
+                    <button onclick="loadMetroX()" class="text-outline hover:text-on-surface transition p-1" title="Actualizar">
+                        <span class="material-symbols-outlined text-lg">refresh</span>
+                    </button>
+                </div>
+            </div>
+            <div id="metroXList" class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                <div class="text-outline/40 text-xs text-center py-4">Conectando con 𝕏...</div>
+            </div>
+        </section>
+    </div>
+
+    </div>
+    </main>
+
+    <!-- No separate footer needed -->
+
+        <script src="/static/js/ui.js"></script>
+        <script src="/static/js/main.js"></script>
+    </body>
+    </html>

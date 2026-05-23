@@ -35,7 +35,7 @@ def _gloss_to_pose(
     results = [gloss_to_pose(gloss, pose_lookup, spoken_language, signed_language) for gloss in sentences]
     if len(results) == 1:
         return results[0]
-    return PoseResult(pose=concatenate_poses([r.pose for r in results], trim=False))
+    return PoseResult(pose=concatenate_poses([r.pose for r in results], trim=True))
 
 
 def _get_models_dir():
@@ -95,7 +95,7 @@ def _lexicon_input_arguments(parser: argparse.ArgumentParser):
 
 def _text_input_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--text", type=str, required=True)
-    parser.add_argument("--glosser", choices=["simple", "spacylemma", "rules", "nmt"], required=True)
+    parser.add_argument("--glosser", choices=["simple", "spacylemma", "rules", "lse_rules", "nmt", "llm"], required=True)
 
     pre_parser = argparse.ArgumentParser(add_help=False)
     pre_parser.add_argument("--lexicon", type=str)

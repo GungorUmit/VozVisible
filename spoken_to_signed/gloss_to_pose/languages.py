@@ -1,6 +1,7 @@
 LANGUAGE_BACKUP = {
     "slf": "ise",  # Swiss-Italian to Italian
     "ssr": "fsl",  # Swiss-French to French
+    "lse": "ssp",  # LSE to SSP (Spanish Sign Language) for fingerspelling
 }
 
 

@@ -1,106 +1,84 @@
-# 🚀 Proyecto Voz Visible (LSE)
+# 🚀 Voz Visible: Traductor Automático a Lengua de Signos Española (LSE) con IA
 
-<img src="https://fundacionmusicforall.org/wp-content/uploads/2025/05/lengua-signos-espanola.png" alt="Lengua de Signos Española" width="50%" />
-
-## 📜 Briefing: Proyecto Voz Visible (LSE)
+![Voz Visible Banner](assets/vozvisible_banner.png)
 
 ## 📜 Definición del Proyecto
 
-El **Proyecto Voz Visible (LSE)** es una solución tecnológica de vanguardia diseñada para eliminar las barreras de comunicación en el espacio público. Mediante el uso de **Inteligencia Artificial Multimodal**, el sistema automatiza la interpretación de mensajes acústicos y megafonía hacia la **Lengua de Signos Española (LSE)**.
+El **Proyecto Voz Visible (LSE)** es una solución tecnológica de vanguardia diseñada para eliminar las barreras de comunicación en el espacio público. Mediante el uso de **Inteligencia Artificial Multimodal**, el sistema automatiza la interpretación de mensajes acústicos y megafonía hacia la Lengua de Signos Española (LSE).
 
 Nuestra misión es garantizar la accesibilidad universal y la autonomía de las personas sordas en entornos críticos como infraestructuras de transporte, edificios gubernamentales y servicios de emergencia, transformando anuncios sonoros en información visual comprensible en tiempo real.
 
 ---
 
-## 🎯 Objetivos Estratégicos
+## 🎯 Objetivos Estratégicos y Desarrollo
 
 El proyecto se articula en torno a tres pilares fundamentales de desarrollo tecnológico:
 
-### 1. Traducción Neuronal de Audio a Glosa Visual
-* **Desarrollo:** Implementación de un motor de procesamiento de lenguaje natural (NLP) que traduzca el castellano oral a la estructura gramatical y sintáctica de la LSE (glosas).
+### 1. Traducción Neuronal de Audio a Glosa Visual (En Integración)
+* **Desarrollo:** Implementación de un motor de procesamiento de lenguaje natural (NLP) que traduzca el castellano oral a la estructura gramatical y sintáctica de la LSE (glosas). Actualmente el equipo se encuentra integrando el módulo ASR y traducción neuronal para conectar directamente el audio con nuestra base visual.
 * **Hito:** Asegurar una fidelidad semántica superior al 90%, evitando traducciones literales que carezcan de sentido para la comunidad sorda.
 
-### 2. Procesamiento en Streaming de Baja Latencia
-* **Desarrollo:** Optimización del flujo de datos (*pipeline*) que abarca desde el reconocimiento de voz (ASR) hasta el renderizado de vídeo.
-* **Hito:** Lograr un tiempo de respuesta (delay) inferior a 3-5 segundos, permitiendo una interpretación casi simultánea para anuncios de última hora o alertas de seguridad.
+### 2. Procesamiento en Streaming de Baja Latencia (MVP Implementado)
+* **Desarrollo:** Optimización del flujo de datos (*pipeline*) que abarca desde el texto/reconocimiento hasta el renderizado de vídeo de forma asíncrona mediante **Celery**, **Redis** y **OpenCV**.
+* **Hito:** Lograr un tiempo de respuesta (*delay*) inferior a 3-5 segundos para renderizar al avatar 3D, permitiendo una interpretación casi simultánea para anuncios de última hora o alertas de seguridad.
 
-### 3. Interfaz de Comunicación Bidireccional
+### 3. Interfaz de Comunicación Bidireccional (Visión a Futuro)
 * **Desarrollo:** Evolucionar el sistema hacia un modelo interactivo capaz de procesar no solo la salida de audio, sino también la entrada gestual del usuario mediante visión artificial.
 * **Hito:** Facilitar el mantenimiento de conversaciones fluidas en tiempo real, permitiendo una comunicación hombre-máquina accesible y efectiva.
 
 ---
 
-## 🌍 Impacto y Sostenibilidad
+## 📊 Evaluación y Resultados (Dataset RADIS)
+
+Evaluar un traductor de LSE no consiste en alcanzar un 100% de similitud textual, debido a la "elipsis masiva" propia de la lengua de signos (omisión de artículos y preposiciones) y a su estructura gramatical única.
+
+* **Sentence-BLEU:** **8.85%**
+* **Evaluación Cualitativa:** El sistema tiene un **100% de éxito de generación** para todas las alertas predefinidas de transporte en el dashboard.
+* Evaluado por personas nativas en LSE, el veredicto cualitativo ha sido claro: *"Cualquier sordo lo puede entender perfectamente"*. 
+
+Este rendimiento se sitúa sólidamente dentro de los márgenes académicos (5-15% BLEU) esperables para este tipo de traducción textual-visual, validando nuestra arquitectura frente a riesgos de *overfitting*.
+
+<img width="1280" height="556" alt="ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/7f7dc26c-61f7-464d-ad80-d7c2aceadd8b" />
+
+
+---
+
+## 🌍 Impacto Social
 
 Este proyecto se alinea con los **Objetivos de Desarrollo Sostenible (ODS)** de la Agenda 2030:
 * **ODS 10 (Reducción de las desigualdades):** Fomentando la inclusión social de personas con discapacidad auditiva.
-* **ODS 11 (Ciudades y comunidades sostenibles):** Proporcionando acceso a sistemas de transporte e información pública seguros y accesibles para todos.
+* **ODS 11 (Ciudades sostenibles):** Proporcionando acceso a sistemas de transporte e información pública seguros y accesibles para todos.
 
 ---
 
-## 📦 Condiciones de Entrega  
+## 🛠️ Instrucciones de Instalación y Uso
 
-Para la fecha de entrega del 1 de junio, el equipo deberá presentar:  
+### Prerrequisitos
+- Python 3.10
+- Redis (corriendo localmente en el puerto 6379, db 1)
 
-✅ **Repositorio en GitHub** con el código fuente documentado.
-
-✅ **Artículo del proyecto publicado en Medium.
-
-✅ **Demo en vivo** mostrando el funcionamiento del modelo.
-
-✅ **Presentación técnica**, explicando los objetivos, desarrollo y tecnologías utilizadas.
-
-✅ **Tablero Kanban** con la gestión del proyecto (Trello, Jira, etc.).  
-
----
-
-## ⚙️ Tecnologías Recomendadas  
-
-- **Control de versiones:** Git / GitHub  
-- **Entorno de ejecución:** Docker  
-- **Lenguaje principal:** Python  
-- **Librerías útiles:** 
-- ** Modelos que usar;
-- **front end:** Streamlit, Gradio 
-- **Gestión del proyecto:** Trello, Jira, Github  
+### Despliegue del Sistema
+1. **Arrancar Redis** (si usas macOS/Linux o Docker):
+   ```bash
+   redis-server
+   ```
+2. **Iniciar el Worker de Celery** (Procesa los vídeos en segundo plano):
+   ```bash
+   celery -A tasks worker --loglevel=info
+   ```
+3. **Iniciar la Interfaz Web (Flask)**:
+   ```bash
+   python server.py
+   ```
+4. Abre el navegador en `http://localhost:5002` para interactuar con Voz Visible.
 
 ---
 
-## 🏆 Niveles de Entrega  
-
-### 🟢 **Nivel Esencial:**  
-✅ 
-
-✅
-
-✅ 
-
-✅
-
-### 🟡 **Nivel Medio:**  
-✅ 
-
-✅ 
-
-### 🟠 **Nivel Avanzado:**  
-✅ 
-
-✅
-
-✅ 
-
-### 🔴 **Nivel Experto:**  
-✅ 
-
-✅ 
-
----
-
-## ⚙️El Equipo
+## 👥 El Equipo (Saturdays.AI 2026)
 * Alonso Campos 
 * Adrián Bisquert
 * Abigail Masapanta 
 * Gabriel Vidal
 * Umit Gungor 
 
-
+*#AccesibilidadDigital #LenguaDeSignos #IA #NLP #SaturdaysAI*
