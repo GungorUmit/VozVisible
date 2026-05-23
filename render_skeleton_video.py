@@ -21,11 +21,20 @@ def render_skeleton_video(pose: Pose, output_path: str) -> None:
     width = int(pose.header.dimensions.width)
     height = int(pose.header.dimensions.height)
     fps = float(pose.body.fps)
-    fourcc = cv2.VideoWriter_fourcc(*"avc1")
-    writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    writer = None
+    last_error = None
+    # Render builds often lack H.264, so try a few common OpenCV/FFmpeg codecs.
+    for codec in ("avc1", "mp4v", "avc3", "XVID"):
+        fourcc = cv2.VideoWriter_fourcc(*codec)
+        candidate = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        if candidate.isOpened():
+            writer = candidate
+            break
+        last_error = codec
+        candidate.release()
 
-    if not writer.isOpened():
-        raise RuntimeError(f"Could not open video writer for {output_path}")
+    if writer is None:
+        raise RuntimeError(f"Could not open video writer for {output_path} using codecs avc1/mp4v/avc3/XVID (last tried: {last_error})")
 
     try:
         for frame in frames:
