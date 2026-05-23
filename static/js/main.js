@@ -39,6 +39,9 @@
         const r = await fetch(`/api/status/${jobId}`);
         if (!r.ok) { const e = await r.json().catch(()=>({})); onUpdate({ error: e.error || 'Estado no disponible' }); stopped=true; return; }
         const s = await r.json();
+        if (s.logs && s.logs.length > 0 && typeof window.renderAgentLogs === 'function') {
+            window.renderAgentLogs(s.logs);
+        }
         onUpdate(s);
         if (s.status === 'completed' || s.status === 'failed') { stopped = true; return; }
         if (Date.now() - start > MAX_WAIT) { onUpdate({ error: 'Tiempo excedido' }); stopped = true; return; }
