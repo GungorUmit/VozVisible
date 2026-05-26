@@ -48,10 +48,25 @@ def main():
         _log_rss("before_pipeline")
         # Note: run_multi_agent_pipeline returns {clean_text, glosses, speed}
         # we can pass a log_callback to see the "thoughts" of the agents
+        def _shorten(v, max_len=200):
+            try:
+                if v is None:
+                    return "<none>"
+                # If it's a list/tuple/ndarray-like, summarize
+                if isinstance(v, (list, tuple)):
+                    return f"<{type(v).__name__} len={len(v)}>"
+                s = str(v)
+                if len(s) > max_len:
+                    return s[:max_len] + "...<truncated>"
+                return s
+            except Exception:
+                return "<unserializable>"
+
         def log_step(data):
             role = data.get("role", "system").upper()
             msg = data.get("msg", "")
-            print(f"[{role}] {msg}")
+            safe_msg = _shorten(msg)
+            print(f"[{role}] {safe_msg}")
 
         ai_result = run_multi_agent_pipeline(args.text, api_key, log_callback=log_step)
         _log_rss("after_pipeline")
