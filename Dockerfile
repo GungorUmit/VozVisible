@@ -1,7 +1,7 @@
 # ============================================================
 # VozVisible — Dockerfile Multi-Servicio (Flask + Celery + Redis)
 # ============================================================
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # ── Dependencias del sistema ──────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
