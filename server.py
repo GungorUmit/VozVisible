@@ -3,13 +3,14 @@ import sys
 import subprocess
 import unicodedata
 import json
+import io
 import uuid
 import threading
 import sqlite3
 import glob
 import time
 from pathlib import Path
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
 
 # Optional: encrypt API keys at rest (import optional to avoid native deps in dev)
 try:
@@ -133,13 +134,47 @@ def _slugify(t: str) -> str:
 
 jobs = {}
 
+def _load_video_artifact(job_id: str):
+    """Return a file-like object for a rendered video if we can find one.
+
+    Priority: Redis artifact from worker dyno, then local filesystem fallback.
+    """
+    try:
+        import redis
+    except Exception:
+        redis = None
+
+    if redis is not None:
+        try:
+            redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/1")
+            client = redis.Redis.from_url(redis_url)
+            data = client.get(f"vozvisible:video:{job_id}")
+            if data:
+                return io.BytesIO(data)
+        except Exception:
+            pass
+
+    local_paths = []
+    if job_id in jobs:
+        output_path = jobs[job_id].get("output_path")
+        if output_path:
+            local_paths.append(output_path)
+
+    local_paths.extend([
+        f"assets/output/{job_id}.mp4",
+    ])
+
+    for candidate in local_paths:
+        if candidate and os.path.exists(candidate):
+            return candidate
+    return None
 def generate_video_task(job_id, texto, slug, env):
     output_path = f"assets/output/{slug}.mp4"
     os.makedirs("assets/output", exist_ok=True)
     
     if os.path.exists(output_path):
         log_emission(texto, output_path)
-        jobs[job_id] = {"status": "completed", "video_url": f"/{output_path}", "texto": texto, "cached": True}
+        jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "cached": True, "output_path": output_path}
         return
 
     cmd = [sys.executable, "generate_video.py", "--text", texto, "--output", output_path, "--disable-fingerspelling"]
@@ -148,7 +183,7 @@ def generate_video_task(job_id, texto, slug, env):
         result = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, timeout=120)
         if os.path.exists(output_path):
             log_emission(texto, output_path)
-            jobs[job_id] = {"status": "completed", "video_url": f"/{output_path}", "texto": texto}
+            jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "output_path": output_path}
         else:
             jobs[job_id] = {"status": "failed", "error": "No se pudo generar el video."}
     except subprocess.CalledProcessError as e:
@@ -167,6 +202,17 @@ def index():
 def serve_assets(filename):
     return send_from_directory("assets", filename)
 
+@app.route("/api/video/<job_id>.mp4")
+def serve_generated_video(job_id):
+    artifact = _load_video_artifact(job_id)
+    if artifact is None:
+        return jsonify({"error": "No se encontró el video generado", "job_id": job_id}), 404
+
+    if isinstance(artifact, str):
+        return send_from_directory(os.path.dirname(artifact), os.path.basename(artifact), mimetype="video/mp4")
+
+    artifact.seek(0)
+    return send_file(artifact, mimetype="video/mp4", as_attachment=False, download_name=f"{job_id}.mp4")
 
 def _ensure_local_demo_video() -> Path:
     """Generate a small local demo MP4 if it does not already exist."""

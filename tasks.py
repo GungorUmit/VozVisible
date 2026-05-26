@@ -6,6 +6,7 @@ import time
 import glob
 import logging
 import resource
+import base64
 from celery import Celery
 
 celery_app = Celery(
@@ -42,6 +43,26 @@ def _log_rss(logger, prefix):
         pass
 
 
+def _store_video_artifact(job_id: str, output_path: str, ttl_seconds: int = 86400) -> None:
+    """Persist the rendered MP4 so the web dyno can serve it even if the worker
+    runs on a different instance.
+
+    Uses Redis when available; otherwise it falls back silently to the filesystem.
+    """
+    try:
+        import redis
+    except Exception:
+        return
+
+    try:
+        redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/1")
+        client = redis.Redis.from_url(redis_url)
+        with open(output_path, "rb") as f:
+            client.setex(f"vozvisible:video:{job_id}", ttl_seconds, f.read())
+    except Exception:
+        return
+
+
 @celery_app.task
 def cleanup_old_outputs():
     """Delete mp4 files older than 24 hours from assets/output."""
@@ -71,7 +92,8 @@ def async_generate_video(self, texto, slug, env):
     
     if os.path.exists(output_path):
         log_emission(texto, output_path)
-        return {"status": "completed", "video_url": f"/{output_path}", "texto": texto, "cached": True}
+        _store_video_artifact(self.request.id, output_path)
+        return {"status": "completed", "video_url": f"/api/video/{self.request.id}.mp4", "texto": texto, "cached": True}
     # Use backend_improvements.py (The "AI Mind") for processing
     cmd = [sys.executable, "backend_improvements.py", "--text", texto, "--output", output_path]
 
@@ -203,11 +225,12 @@ def async_generate_video(self, texto, slug, env):
 
         if os.path.exists(output_path):
             log_emission(texto, output_path)
+            _store_video_artifact(self.request.id, output_path)
             try:
                 self.update_state(state='PROGRESS', meta={'stage': 'completed', 'video': output_path})
             except Exception:
                 pass
-            return {"status": "completed", "video_url": f"/{output_path}", "texto": texto}
+            return {"status": "completed", "video_url": f"/api/video/{self.request.id}.mp4", "texto": texto}
         else:
             logger.error("Video file not found after subprocess completion")
             if task_log_f:

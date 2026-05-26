@@ -153,12 +153,24 @@
       };
       setTimeout(() => { if (!player.classList.contains('hidden')) return; player.play().catch(() => {}); }, 800); 
     }
-    const placeholder = document.getElementById('videoPlaceholder'); if (placeholder) placeholder.classList.remove('hidden');
     const sub = SUBTITLES[window.currentTipo] || '';
     if (sub){ const st = document.getElementById('subtitleText'); if (st) st.textContent = sub; triggerSubtitle(); const playerEl = document.getElementById('videoPlayer'); if (playerEl){ playerEl.removeEventListener('seeked', triggerSubtitle); playerEl.addEventListener('seeked', triggerSubtitle); } }
     else { const subBar = document.getElementById('subtitleBar'); if (subBar) subBar.classList.remove('visible'); const playerEl = document.getElementById('videoPlayer'); if (playerEl) playerEl.removeEventListener('seeked', triggerSubtitle); }
     
     addToLog(texto);
+  }
+
+  async function probarDemoLocal(){
+    try {
+      if (typeof showLoading === 'function') showLoading();
+      const res = await fetch('/api/local-demo-video');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo preparar el demo local');
+      window.currentTipo = 'cercanias_1';
+      showSuccess(data.texto || 'DEMO LOCAL VOZVISIBLE', data.video_url);
+    } catch (err) {
+      showError(err.message || 'No se pudo cargar el demo local');
+    }
   }
 
   let subtitleTimeout=null, subtitleTimeout2=null;
@@ -306,10 +318,11 @@
 
     // expose saveApiKey and switchTab and toggleFullscreen globally
     window.saveApiKey = saveApiKey; window.switchTab = switchTab; window.toggleFullscreen = toggleFullscreen; window.showLoading = showLoading; window.showSuccess = showSuccess; window.showError = showError; window.addToLog = addToLog; window.detenerMegafonia = detenerMegafonia; window.triggerSubtitle = triggerSubtitle;
+    window.probarDemoLocal = probarDemoLocal;
   });
 
   // Also expose immediately to ensure handlers bound via onclick attributes work
-  window.saveApiKey = saveApiKey; window.switchTab = switchTab; window.toggleFullscreen = toggleFullscreen; window.showLoading = showLoading; window.showSuccess = showSuccess; window.showError = showError; window.addToLog = addToLog; window.detenerMegafonia = detenerMegafonia; window.triggerSubtitle = triggerSubtitle; window.loadAlerts = loadAlerts; window.loadWhatsapp = loadWhatsapp; window.loadMetroX = loadMetroX;
+  window.saveApiKey = saveApiKey; window.switchTab = switchTab; window.toggleFullscreen = toggleFullscreen; window.showLoading = showLoading; window.showSuccess = showSuccess; window.showError = showError; window.addToLog = addToLog; window.detenerMegafonia = detenerMegafonia; window.triggerSubtitle = triggerSubtitle; window.loadAlerts = loadAlerts; window.loadWhatsapp = loadWhatsapp; window.loadMetroX = loadMetroX; window.probarDemoLocal = probarDemoLocal;
   
   window.emitirCustomText = function(texto) {
       const input = document.getElementById('customText');

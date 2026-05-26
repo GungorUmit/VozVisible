@@ -75,6 +75,7 @@ pydantic_core
 Pygments==2.20.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
+redis
 requests==2.33.1
 requests-oauthlib==2.0.0
 rich==15.0.0
