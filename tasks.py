@@ -99,7 +99,7 @@ def async_generate_video(self, texto, slug, env):
             
             # Pasar glosas calculadas si el bucle del crítico tuvo éxito
             if glosses:
-                cmd.extend(["--precomputed-glosses", glosses])
+                cmd.extend(["--precomputed-glosses", glosses.lower()])
             else:
                 cmd.extend(["--glosser", "lse_rules"])
                 
