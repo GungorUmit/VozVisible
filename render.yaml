@@ -1,0 +1,19 @@
+# render.yaml — Blueprint de Render.com para VozVisible
+# Despliega con: https://render.com/deploy
+# O vincúlalo manualmente a tu repo de GitHub.
+
+services:
+  - type: web
+    name: vozvisible
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter  # ~$7/mes — suficiente para la demo
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false  # Lo pondrás manualmente en el dashboard de Render
+      - key: REDIS_URL
+        value: redis://localhost:6379/1
+      - key: PORT
+        value: "5002"
+    healthCheckPath: /
+    autoDeploy: true  # Se redesplega automáticamente al hacer push a GitHub

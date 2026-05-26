@@ -1,0 +1,19 @@
+# Archivos que no deben entrar en la imagen Docker
+.git
+.gitignore
+.DS_Store
+.venv/
+.venv310/
+.venv_video/
+__pycache__/
+*.pyc
+*.log
+*.db
+secrets/
+TAL-IA/
+LSEGloss2SpanishText/
+.vscode/
+test_output.mp4
+out.mp4
+celery.log
+server.log

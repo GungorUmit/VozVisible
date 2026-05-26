@@ -1,0 +1,499 @@
+{
+    "cercanias_1": {
+        "text": "El tren con destino Atocha va a efectuar su salida.",
+        "flat_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "SALIR"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "SALIR"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "cercanias_2": {
+        "text": "Tren con destino Alcalá de Henares. Próxima parada: Méndez Álvaro.",
+        "flat_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "PRÓXIMO"
+            ],
+            [
+                null,
+                "PARADA"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "PRÓXIMO"
+            ],
+            [
+                null,
+                "PARADA"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "cercanias_3": {
+        "text": "Disculpen las molestias. El servicio de cercanías está interrumpido por avería.",
+        "flat_glosses": [
+            [
+                null,
+                "DISCULPEN"
+            ],
+            [
+                null,
+                "MOLESTIAS"
+            ],
+            [
+                null,
+                "SERVICIO"
+            ],
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "INTERRUMPIR"
+            ],
+            [
+                null,
+                "AVERÍA"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "DISCULPEN"
+            ],
+            [
+                null,
+                "MOLESTIAS"
+            ],
+            [
+                null,
+                "SERVICIO"
+            ],
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "INTERRUMPIR"
+            ],
+            [
+                null,
+                "AVERÍA"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "ave_1": {
+        "text": "El tren con destino Barcelona va a efectuar su salida por vía dos.",
+        "flat_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "SALIR"
+            ],
+            [
+                null,
+                "VÍA"
+            ],
+            [
+                null,
+                "DOS"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "DESTINO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "SALIR"
+            ],
+            [
+                null,
+                "VÍA"
+            ],
+            [
+                null,
+                "DOS"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "ave_2": {
+        "text": "Por su seguridad, no pasen de la línea amarilla del andén.",
+        "flat_glosses": [
+            [
+                null,
+                "SEGURIDAD"
+            ],
+            [
+                null,
+                "NO"
+            ],
+            [
+                null,
+                "PASAR"
+            ],
+            [
+                null,
+                "LÍNEA"
+            ],
+            [
+                null,
+                "AMARILLO"
+            ],
+            [
+                null,
+                "ANDÉN"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "SEGURIDAD"
+            ],
+            [
+                null,
+                "NO"
+            ],
+            [
+                null,
+                "PASAR"
+            ],
+            [
+                null,
+                "LÍNEA"
+            ],
+            [
+                null,
+                "AMARILLO"
+            ],
+            [
+                null,
+                "ANDÉN"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "ave_3": {
+        "text": "Atención, el tren va a efectuar su entrada por vía uno.",
+        "flat_glosses": [
+            [
+                null,
+                "ATENCIÓN"
+            ],
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "LLEGAR"
+            ],
+            [
+                null,
+                "VÍA"
+            ],
+            [
+                null,
+                "UNO"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "ATENCIÓN"
+            ],
+            [
+                null,
+                "TREN"
+            ],
+            [
+                null,
+                "LLEGAR"
+            ],
+            [
+                null,
+                "VÍA"
+            ],
+            [
+                null,
+                "UNO"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "metro_1": {
+        "text": "Próxima estación: Sol. Correspondencia con líneas uno y tres.",
+        "flat_glosses": [
+            [
+                null,
+                "PRÓXIMO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "CORRESPONDER"
+            ],
+            [
+                null,
+                "LÍNEA"
+            ],
+            [
+                null,
+                "UNO"
+            ],
+            [
+                null,
+                "TRES"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "PRÓXIMO"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "CORRESPONDER"
+            ],
+            [
+                null,
+                "LÍNEA"
+            ],
+            [
+                null,
+                "UNO"
+            ],
+            [
+                null,
+                "TRES"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "metro_2": {
+        "text": "Final de trayecto. Por favor, desalojen el tren.",
+        "flat_glosses": [
+            [
+                null,
+                "FINAL"
+            ],
+            [
+                null,
+                "DESALOJAR"
+            ],
+            [
+                null,
+                "TREN"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "FINAL"
+            ],
+            [
+                null,
+                "DESALOJAR"
+            ],
+            [
+                null,
+                "TREN"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    },
+    "metro_3": {
+        "text": "Estación en curva. Tengan cuidado para no introducir el pie entre coche y andén.",
+        "flat_glosses": [
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "CURVA"
+            ],
+            [
+                null,
+                "TENGAN"
+            ],
+            [
+                null,
+                "CUIDADO"
+            ],
+            [
+                null,
+                "NO"
+            ],
+            [
+                null,
+                "INTRODUCIR"
+            ],
+            [
+                null,
+                "PIE"
+            ],
+            [
+                null,
+                "COCHE"
+            ],
+            [
+                null,
+                "ANDÉN"
+            ]
+        ],
+        "present_glosses": [
+            [
+                null,
+                "ESTACIÓN"
+            ],
+            [
+                null,
+                "CURVA"
+            ],
+            [
+                null,
+                "TENGAN"
+            ],
+            [
+                null,
+                "CUIDADO"
+            ],
+            [
+                null,
+                "NO"
+            ],
+            [
+                null,
+                "INTRODUCIR"
+            ],
+            [
+                null,
+                "PIE"
+            ],
+            [
+                null,
+                "COCHE"
+            ],
+            [
+                null,
+                "ANDÉN"
+            ]
+        ],
+        "missing_glosses": [],
+        "ok": true
+    }
+}

@@ -22,3 +22,12 @@ __pycache__/
 # Repos externos
 TAL-IA/
 LSEGloss2SpanishText/
+
+# Logs y archivos temporales
+*.log
+celery.log
+server.log
+test_output.mp4
+out.mp4
+requirements-local.txt
+dump.rdb

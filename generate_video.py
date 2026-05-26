@@ -70,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable the fingerspelling fallback when a gloss is missing",
     )
     parser.add_argument(
+        "--precomputed-glosses",
+        default=None,
+        help="If provided, bypasses the glosser and uses these exact glosses (space separated).",
+    )
+    parser.add_argument(
         "--renderer",
         default="skeleton",
         choices=["skeleton", "pix2pix"],
@@ -111,7 +116,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         lexicon, args.spoken_language, args.signed_language
     )
 
-    sentences = _text_to_gloss(args.text, args.spoken_language, args.glosser)
+    if args.precomputed_glosses:
+        # split precomputed glosses into words and wrap in a single sentence list of tuples
+        sentences = [[(w, w) for w in args.precomputed_glosses.split()]]
+    else:
+        sentences = _text_to_gloss(args.text, args.spoken_language, args.glosser)
+        
     result = _gloss_to_pose(
         sentences,
         str(lexicon),
