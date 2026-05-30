@@ -1,0 +1,45 @@
+Traceback (most recent call last):
+  File "/Users/umitgungor/Desktop/Proyectos/Saturdays AI/VozVisible/VozVisible/generate_video.py", line 16, in <module>
+    from spoken_to_signed.bin import _gloss_to_pose, _pose_to_video, _text_to_gloss
+  File "/Users/umitgungor/Desktop/Proyectos/Saturdays AI/VozVisible/VozVisible/spoken_to_signed/bin.py", line 9, in <module>
+    from spoken_to_signed.gloss_to_pose import (
+  File "/Users/umitgungor/Desktop/Proyectos/Saturdays AI/VozVisible/VozVisible/spoken_to_signed/gloss_to_pose/__init__.py", line 6, in <module>
+    from .concatenate import concatenate_poses
+  File "/Users/umitgungor/Desktop/Proyectos/Saturdays AI/VozVisible/VozVisible/spoken_to_signed/gloss_to_pose/concatenate.py", line 12, in <module>
+    from spoken_to_signed.gloss_to_pose.smoothing import smooth_concatenate_poses
+  File "/Users/umitgungor/Desktop/Proyectos/Saturdays AI/VozVisible/VozVisible/spoken_to_signed/gloss_to_pose/smoothing.py", line 4, in <module>
+    import scipy.signal
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/signal/__init__.py", line 324, in <module>
+    from ._bsplines import *
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/signal/_bsplines.py", line 12, in <module>
+    from scipy.interpolate import BSpline
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/interpolate/__init__.py", line 167, in <module>
+    from ._interpolate import *
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/interpolate/_interpolate.py", line 12, in <module>
+    from . import _fitpack_py
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/interpolate/_fitpack_py.py", line 10, in <module>
+    from ._bsplines import BSpline
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/interpolate/_bsplines.py", line 9, in <module>
+    from scipy.optimize import minimize_scalar
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/optimize/__init__.py", line 410, in <module>
+    from ._minimize import *
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/optimize/_minimize.py", line 27, in <module>
+    from ._trustregion_constr import _minimize_trustregion_constr
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/optimize/_trustregion_constr/__init__.py", line 4, in <module>
+    from .minimize_trustregion_constr import _minimize_trustregion_constr
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/optimize/_trustregion_constr/minimize_trustregion_constr.py", line 5, in <module>
+    from .._constraints import (
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/scipy/optimize/_constraints.py", line 8, in <module>
+    from numpy.testing import suppress_warnings
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/numpy/testing/__init__.py", line 8, in <module>
+    from unittest import TestCase
+  File "/Users/umitgungor/opt/miniconda3/lib/python3.9/unittest/__init__.py", line 59, in <module>
+    from .result import TestResult
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 930, in get_code
+  File "<frozen importlib._bootstrap_external>", line 387, in cache_from_source
+  File "<frozen importlib._bootstrap_external>", line 129, in _path_split
+KeyboardInterrupt

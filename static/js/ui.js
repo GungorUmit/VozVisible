@@ -129,8 +129,8 @@
     const statusLabel = document.getElementById('statusLabel'); if (statusLabel){ statusLabel.textContent='EMITIENDO EN PANTALLAS'; statusLabel.className='font-label-caps text-label-caps text-error'; }
     const live = document.getElementById('liveBadge'); if (live) live.classList.remove('hidden');
     const fb = document.getElementById('customFeedback'); if (fb) fb.classList.add('hidden');
-    const player = document.getElementById('videoPlayer'); 
-    if (player){ 
+    const player = document.getElementById('videoPlayer');
+    if (player && videoUrl){ 
       const safeUrl = (videoUrl||'') + '?t=' + Date.now();
       player.pause();
       player.classList.add('hidden');

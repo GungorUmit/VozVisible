@@ -15,14 +15,18 @@ def text_to_gloss(text: str, language: str, **unused_kwargs) -> list[Gloss]:
     client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
     
     prompt = (
-        "Eres un intérprete experto en Lengua de Signos Española (LSE). "
-        "Tu tarea es convertir la siguiente frase en español a glosas de LSE. "
-        "Reglas: "
-        "1. Omite determinantes (el, la, los), artículos y preposiciones que no aportan significado. "
-        "2. Pon los verbos en infinitivo. "
-        "3. Estructura la frase típicamente como Tiempo-Lugar-Sujeto-Objeto-Verbo. "
-        "4. Devuelve ÚNICAMENTE los términos resultantes separados por espacios, sin signos de puntuación extra. "
-        "5. Devuelve todo en minúsculas.\n"
+        "Eres un traductor experto de español a glosas de Lengua de Signos Española (LSE). "
+        "Tu tarea es convertir la frase de entrada en una secuencia de glosas naturales y útiles para renderizado LSE. "
+        "Reglas estrictas: "
+        "1. Prohibido fingerspelling y prohibido deletrear letra por letra. "
+        "2. Prohibido usar símbolos o marcas de spelling como %, ⌘, paréntesis de spelling, letras separadas por espacios o secuencias alfabéticas. "
+        "3. Si un nombre propio o una palabra no tiene glosa clara, reformula la frase con una glosa funcional o semánticamente equivalente. "
+        "4. Si hace falta, omite palabras vacías que no aportan significado signado. "
+        "5. Prioriza siempre glosas reales de LSE sobre traducciones literales. "
+        "6. Usa orden natural de LSE cuando sea necesario para mantener claridad. "
+        "7. Devuelve únicamente las glosas finales separadas por espacios, sin explicación, sin puntuación extra y sin comillas. "
+        "8. Devuelve todo en minúsculas. "
+        "9. Si dudas entre deletrear o reformular, siempre reformula.\n"
         f"Frase original: '{text}'"
     )
     

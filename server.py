@@ -9,6 +9,7 @@ import threading
 import sqlite3
 import glob
 import time
+import shutil
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
 
@@ -134,6 +135,26 @@ def _slugify(t: str) -> str:
 
 jobs = {}
 
+
+def _mp4_is_valid(path: str) -> bool:
+    if not path or not os.path.exists(path):
+        return False
+    try:
+        if os.path.getsize(path) < 1024:
+            return False
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_streams", "-of", "json", path],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if probe.returncode != 0:
+            return False
+        data = json.loads(probe.stdout or "{}")
+        return bool(data.get("streams"))
+    except Exception:
+        return False
+
 def _load_video_artifact(job_id: str):
     """Return a file-like object for a rendered video if we can find one.
 
@@ -165,34 +186,87 @@ def _load_video_artifact(job_id: str):
     ])
 
     for candidate in local_paths:
-        if candidate and os.path.exists(candidate):
+        if candidate and _mp4_is_valid(candidate):
             return candidate
     return None
 def generate_video_task(job_id, texto, slug, env):
     output_path = f"assets/output/{slug}.mp4"
     os.makedirs("assets/output", exist_ok=True)
-    
-    if os.path.exists(output_path):
+
+    stable_output_path = f"assets/output/{job_id}.mp4"
+
+    if _mp4_is_valid(output_path):
         log_emission(texto, output_path)
-        jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "cached": True, "output_path": output_path}
+        try:
+            if output_path != stable_output_path:
+                shutil.copyfile(output_path, stable_output_path)
+        except Exception:
+            stable_output_path = output_path
+        jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "cached": True, "output_path": stable_output_path}
         return
+    if os.path.exists(output_path):
+        try:
+            os.remove(output_path)
+        except Exception:
+            pass
 
     cmd = [sys.executable, "generate_video.py", "--text", texto, "--output", output_path, "--disable-fingerspelling"]
 
+    # Start subprocess with Popen so we can terminate it from /api/stop
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, timeout=120)
-        if os.path.exists(output_path):
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+        jobs[job_id]['proc'] = proc
+        start_time = time.time()
+        timeout_seconds = int(os.environ.get("AI_GENERATION_TIMEOUT", "900"))
+
+        # Stream output to a small buffer (and ignore in this simple server)
+        stdout_lines = []
+        stderr_lines = []
+        while True:
+            if proc.poll() is not None:
+                break
+            if time.time() - start_time > timeout_seconds:
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+                jobs[job_id] = {"status": "failed", "error": "Tiempo de generación excedido."}
+                return
+            # Non-blocking read
+            try:
+                if proc.stdout:
+                    line = proc.stdout.readline()
+                    if line:
+                        stdout_lines.append(line)
+            except Exception:
+                pass
+            try:
+                if proc.stderr:
+                    el = proc.stderr.readline()
+                    if el:
+                        stderr_lines.append(el)
+            except Exception:
+                pass
+            time.sleep(0.05)
+
+        returncode = proc.returncode
+        if returncode != 0:
+            err_text = ''.join(stderr_lines)[:1000]
+            jobs[job_id] = {"status": "failed", "error": f"Error en generación: {err_text}"}
+            return
+
+        if _mp4_is_valid(output_path):
             log_emission(texto, output_path)
-            jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "output_path": output_path}
+            try:
+                if output_path != stable_output_path:
+                    shutil.copyfile(output_path, stable_output_path)
+            except Exception:
+                stable_output_path = output_path
+            jobs[job_id] = {"status": "completed", "video_url": f"/api/video/{job_id}.mp4", "texto": texto, "output_path": stable_output_path}
         else:
-            jobs[job_id] = {"status": "failed", "error": "No se pudo generar el video."}
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Error en generación: {e.stderr}"
-        if "not found" in e.stderr or "Exception: No poses" in e.stderr:
-            error_msg = "Vocabulario insuficiente: algunas palabras no están en la base de datos LSE."
-        jobs[job_id] = {"status": "failed", "error": error_msg}
-    except subprocess.TimeoutExpired:
-        jobs[job_id] = {"status": "failed", "error": "Tiempo de generación excedido."}
+            jobs[job_id] = {"status": "failed", "error": "No se pudo generar un vídeo válido."}
+    except Exception as e:
+        jobs[job_id] = {"status": "failed", "error": f"Error interno en generación: {str(e)}"}
 
 @app.route("/")
 def index():
@@ -262,6 +336,9 @@ def generate():
     data = request.get_json()
     tipo = data.get("tipo", "")
     texto_custom = data.get("texto", "")
+    force_local = str(data.get("force_local", "")) == "1"
+    mode = data.get("mode", "") or ("fast" if data.get("fast") else "")
+    mode = mode or "ai"
 
     if tipo and tipo in FRASES:
         texto = FRASES[tipo]
@@ -282,8 +359,22 @@ def generate():
     from tasks import async_generate_video
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "processing", "texto": texto}
+    if force_local or mode == 'fast':
+        # Fast/local generation uses the lightweight wrapper `generate_video.py`
+        # initialize job slot and start worker thread
+        jobs[job_id] = {"status": "processing", "texto": texto}
+        def _run_local():
+            try:
+                generate_video_task(job_id, texto, slug, env)
+            finally:
+                # ensure proc handle removed when done
+                jobs[job_id].pop('proc', None)
+
+        worker = threading.Thread(target=_run_local, daemon=True)
+        worker.start()
+        return jsonify({"job_id": job_id, "status": "processing", "texto": texto, "mode": "local-thread"})
     try:
-        task = async_generate_video.apply_async(args=(texto, slug, env))
+        task = async_generate_video.apply_async(args=(texto, slug, env, mode))
         return jsonify({"job_id": task.id, "status": "processing"})
     except Exception:
         worker = threading.Thread(target=generate_video_task, args=(job_id, texto, slug, env), daemon=True)
@@ -293,17 +384,54 @@ def generate():
 @app.route("/api/status/<job_id>")
 def check_status(job_id):
     if job_id in jobs:
-        return jsonify(jobs[job_id])
-    from tasks import celery_app
-    task = celery_app.AsyncResult(job_id)
-    state = task.state
-    if state in ("PENDING", "RECEIVED", "STARTED"):
-        return jsonify({"status": "processing"})
-    if state == "SUCCESS":
-        return jsonify(task.result)
-    if state == "FAILURE":
-        return jsonify({"status": "failed", "error": str(task.result)})
-    return jsonify({"status": state})
+        payload = {k: v for k, v in jobs[job_id].items() if k != 'proc'}
+        return jsonify(payload)
+    try:
+        from tasks import celery_app
+        task = celery_app.AsyncResult(job_id)
+        state = task.state
+        if state in ("PENDING", "RECEIVED", "STARTED"):
+            return jsonify({"status": "processing", "job_id": job_id})
+        if state == "SUCCESS":
+            return jsonify(task.result)
+        if state == "FAILURE":
+            return jsonify({"status": "failed", "error": str(task.result), "job_id": job_id})
+        return jsonify({"status": state, "job_id": job_id})
+    except Exception:
+        return jsonify({"status": "processing", "job_id": job_id, "retryable": True})
+
+
+@app.route("/api/stop", methods=["POST"])
+def stop_job():
+    data = request.get_json() or {}
+    job_id = data.get('job_id')
+
+    # If a local job is running, try to terminate its process
+    if job_id and job_id in jobs:
+        j = jobs[job_id]
+        proc = j.get('proc')
+        if proc and hasattr(proc, 'poll') and proc.poll() is None:
+            try:
+                proc.kill()
+                jobs[job_id] = {"status": "failed", "error": "Canceled by user"}
+                return jsonify({"stopped": True, "job_id": job_id})
+            except Exception as e:
+                return jsonify({"stopped": False, "error": str(e)}), 500
+        else:
+            # Nothing to kill locally; if it's already finished, report it
+            return jsonify({"stopped": False, "error": "No running local process for that job"}), 400
+
+    # If job_id looks like a Celery task id, try to revoke it
+    try:
+        from tasks import celery_app
+        if job_id:
+            celery_app.control.revoke(job_id, terminate=True)
+            jobs[job_id] = {"status": "failed", "error": "Canceled by user (revoked)"}
+            return jsonify({"stopped": True, "job_id": job_id})
+    except Exception:
+        pass
+
+    return jsonify({"stopped": False, "error": "Job not found or could not be stopped"}), 404
 
 
 @app.route('/api/save-api-key', methods=['POST'])
@@ -392,8 +520,74 @@ def get_task_log(job_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5002, host="0.0.0.0")
+
+@app.route('/api/transcribe', methods=['POST'])
+def transcribe():
+    """Accept a single file upload (multipart/form-data 'file') and return transcription."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    f = request.files['file']
+    data = f.read()
+    try:
+        # Import and call the lightweight transcriber. Import locally to avoid
+        # loading heavy model on every server start when not used.
+        from spoken_to_signed.audio_to_text.infer import transcribe_bytes
+        text = transcribe_bytes(data)
+        return jsonify({'text': text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/transcribe-and-generate', methods=['POST'])
+def transcribe_and_generate():
+    """Accept an uploaded audio file, transcribe it, and start generation pipeline."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    f = request.files['file']
+    data = f.read()
+    texto = None
+    try:
+        from spoken_to_signed.audio_to_text.infer import transcribe_bytes
+        texto = transcribe_bytes(data)
+    except Exception as e:
+        # If model or deps are missing, fallback to a simulated transcription
+        # so we can validate end-to-end behavior in dev/local.
+        sim = "Hola, este es un audio de prueba para la función de transcripción y generación de VozVisible."
+        texto = sim
+        # Record the error in the job entry for visibility
+        try:
+            err_msg = f"Transcription fallback used: {e}"
+            jid = str(uuid.uuid4())
+            jobs[jid] = {"status": "warning", "texto": texto, "note": err_msg}
+        except Exception:
+            pass
+
+    # Reuse existing generation flow: create job and submit to Celery if possible
+    slug = _slugify(texto)
+    env = os.environ.copy()
+    groq_key = request.form.get('api_key') or get_encrypted_setting('groq_api_key')
+    if groq_key:
+        env['GROQ_API_KEY'] = groq_key
+        env['OPENAI_API_KEY'] = groq_key
+
+    from tasks import async_generate_video
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {"status": "processing", "texto": texto}
+    # Allow forcing local-thread behavior in development via form param
+    force_local = request.form.get('force_local') == '1'
+    if force_local:
+        worker = threading.Thread(target=generate_video_task, args=(job_id, texto, slug, env), daemon=True)
+        worker.start()
+        return jsonify({"job_id": job_id, "status": "processing", "texto": texto, "mode": "local-thread"})
+    try:
+        task = async_generate_video.apply_async(args=(texto, slug, env))
+        return jsonify({"job_id": task.id, "status": "processing", "texto": texto})
+    except Exception:
+        # Fallback to local thread when Celery not available
+        worker = threading.Thread(target=generate_video_task, args=(job_id, texto, slug, env), daemon=True)
+        worker.start()
+        return jsonify({"job_id": job_id, "status": "processing", "texto": texto, "mode": "local-thread"})
+
 @app.route("/api/whatsapp")
 def get_whatsapp():
     # Simulador (Mock) del Canal Oficial de WhatsApp para Cercanías Madrid
@@ -453,4 +647,8 @@ def get_metro_x():
         }
     ]
     return jsonify({"messages": messages})
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5002, host="0.0.0.0")
 

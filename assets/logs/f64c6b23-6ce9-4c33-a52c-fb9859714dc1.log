@@ -1,0 +1,10 @@
+Starting task f64c6b23-6ce9-4c33-a52c-fb9859714dc1 for slug=hola_este_es_un_audio_de_prueba_para_la_funcion_de_transcripcion_y_generacion_de_vozvisible
+--- MENTE DE LA IA ---
+/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/numpy/core/_methods.py:121: RuntimeWarning: invalid value encountered in divide
+Entrada: Hola, este es un audio de prueba para la función de transcripción y generación de VozVisible.
+  ret = um.true_divide(
+[before_pipeline] rss_kb=88309760
+/Users/umitgungor/opt/miniconda3/lib/python3.9/site-packages/numpy/ma/core.py:5334: RuntimeWarning: Mean of empty slice.
+Analizando texto bruto: 'Hola, este es un audio de prueba para la función de transcripción y generación de VozVisible.'
+  result = super().mean(axis=axis, dtype=dtype, **kwargs)[()]
+[FILTRO] Analizando texto bruto: 'Hola, este es un audio de prueba para la función de transcripción y generación de VozVisible.'

@@ -116,10 +116,10 @@ tailwind.config = {
 </div>
 
 <!-- MAIN -->
-<main class="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-hidden">
+<main class="flex-1 flex flex-col lg:flex-row p-4 md:p-6 gap-6 overflow-auto">
 
 <!-- LEFT SIDEBAR: Transport Categories -->
-<aside class="lg:w-64 flex-shrink-0 flex flex-col gap-2">
+<aside class="lg:w-64 flex-shrink-0 flex flex-col gap-2 min-w-0">
     <!-- Custom Text Input (MOVIDO ARRIBA) -->
     <div class="mb-4 flex flex-col gap-2 bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 shadow-lg">
         <h3 class="font-label-caps text-label-caps text-primary-container flex items-center gap-2">
@@ -130,6 +130,25 @@ tailwind.config = {
         <span id="customFeedback" class="text-[10px] text-outline hidden">Comprobando glosas...</span>
         <button onclick="emitirCustom()" class="bg-primary-container text-on-primary-container font-bold py-2 rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-2 w-full mt-1">
             <span class="material-symbols-outlined text-base">send</span> Emitir
+        </button>
+        <button onclick="emitirCustomFast()" class="bg-primary text-on-background font-bold py-2 rounded-lg hover:opacity-90 transition text-sm flex items-center justify-center gap-2 w-full mt-1">
+            <span class="material-symbols-outlined text-base">bolt</span> Emitir rápido
+        </button>
+        <div class="mt-2 flex flex-col gap-3">
+            <input id="audioFileInput" type="file" accept="audio/*" class="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-3 py-2 text-on-surface text-sm" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button id="recordBtn" onclick="toggleRecord(this)" class="bg-surface-container-lowest text-primary-container border border-outline-variant/40 font-bold py-2 px-3 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 w-full">
+                    <span class="material-symbols-outlined text-base">mic</span>
+                    Grabar
+                </button>
+                <button onclick="transcribirAudio()" class="bg-surface-container-lowest text-primary-container border border-outline-variant/40 font-bold py-2 px-3 rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 w-full">
+                    <span class="material-symbols-outlined text-base">subtitles</span>
+                    Transcribir audio
+                </button>
+            </div>
+        </div>
+        <button onclick="probarDemoLocal()" class="border border-primary-container/40 text-primary-container font-bold py-2 rounded-lg hover:bg-primary-container/10 transition text-sm flex items-center justify-center gap-2 w-full">
+            <span class="material-symbols-outlined text-base">play_arrow</span> Probar video local
         </button>
     </div>
 
@@ -166,8 +185,8 @@ tailwind.config = {
 <div class="flex-1 flex flex-col gap-4 min-w-0">
 
     <!-- Live Monitor (HERO - arriba) -->
-    <section id="monitorSection" class="glass-panel rounded-xl p-2 w-full aspect-video max-h-[600px] border border-primary/20 relative overflow-hidden transition-all duration-300">
-        <div class="h-full bg-surface-container-lowest rounded-lg border border-outline-variant/50 flex flex-col lg:flex-row overflow-hidden relative" id="monitorContainer">
+    <section id="monitorSection" class="glass-panel rounded-xl p-2 w-full aspect-video max-h-[60vh] lg:max-h-[70vh] border border-primary/20 relative overflow-visible transition-all duration-300">
+                <div class="h-full bg-surface-container-lowest rounded-lg border border-outline-variant/50 flex flex-col lg:flex-row overflow-visible relative" id="monitorContainer">
             <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,242,254,0.03)_50%)] bg-[length:100%_4px] opacity-50 z-10"></div>
             
             <!-- Fullscreen Button -->

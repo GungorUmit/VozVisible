@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import json
+import csv
 import resource
 from pathlib import Path
 from services.agents.orchestrator import run_multi_agent_pipeline
@@ -11,7 +12,33 @@ from spoken_to_signed.bin import _gloss_to_pose
 from render_skeleton_video import render_skeleton_video
 
 DEFAULT_LEXICON = Path("spoken_to_signed/assets/lse_lexicon")
-SAFE_FALLBACK_GLOSS = "HOLA"
+SAFE_FALLBACK_GLOSS = "TREN"
+_ALLOWED_GLOSSES = None
+
+
+def _load_allowed_glosses():
+    global _ALLOWED_GLOSSES
+    if _ALLOWED_GLOSSES is not None:
+        return _ALLOWED_GLOSSES
+
+    index_path = DEFAULT_LEXICON / "index.csv"
+    allowed = set()
+    with index_path.open(encoding="utf-8") as file:
+        for row in csv.DictReader(file):
+            for key in ("words", "glosses"):
+                value = (row.get(key) or "").strip()
+                if value:
+                    allowed.add(value.lower())
+    _ALLOWED_GLOSSES = allowed
+    return allowed
+
+
+def _normalize_gloss_tokens(gloss_str):
+    tokens = [token.strip() for token in gloss_str.split() if token.strip()]
+    allowed = _load_allowed_glosses()
+    # Avoid letter-by-letter output and any token not present in the LSE lexicon.
+    filtered = [token for token in tokens if len(token) > 1 and not token.isdigit() and token.lower() in allowed]
+    return filtered or [SAFE_FALLBACK_GLOSS]
 
 
 def _build_sentence_glosses(gloss_tokens):
@@ -76,10 +103,9 @@ def main():
             print("Error: El orquestador no devolvió glosas.")
             sys.exit(1)
 
-        gloss_tokens = [token for token in gloss_str.split() if token.strip()]
-        if not gloss_tokens:
+        gloss_tokens = _normalize_gloss_tokens(gloss_str)
+        if gloss_tokens == [SAFE_FALLBACK_GLOSS]:
             print("Aviso: la traducción no produjo glosas utilizables; usando fallback seguro.")
-            gloss_tokens = [SAFE_FALLBACK_GLOSS]
             
         print(f"\n--- TRADUCCIÓN FINAL ---")
         print(f"Glosas: {gloss_str}")
@@ -89,8 +115,7 @@ def main():
         sentences = _build_sentence_glosses(gloss_tokens)
         
         # 3. Lookup and Generate Pose
-        # We use disable_fingerspelling=False by default to allow fallback if AI gloss isnt in lexicon
-        # although the AI tries to use known glosses.
+        # Keep the pipeline off fingerspelling entirely; only full glosses are rendered.
         lexicon_path = str(DEFAULT_LEXICON)
         try:
             result = _gloss_to_pose(
@@ -98,7 +123,7 @@ def main():
                 lexicon_path,
                 "es",
                 "lse",
-                disable_fingerspelling=False
+                disable_fingerspelling=True
             )
             _log_rss("after_lookup")
         except Exception as lookup_error:
@@ -109,7 +134,7 @@ def main():
                 lexicon_path,
                 "es",
                 "lse",
-                disable_fingerspelling=False
+                disable_fingerspelling=True
             )
             _log_rss("after_fallback_lookup")
         

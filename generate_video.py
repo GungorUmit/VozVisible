@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import unicodedata
 from pathlib import Path
 from typing import Optional
@@ -100,6 +101,11 @@ def _resolve_lookup_language(lexicon: Path, spoken_language: str, signed_languag
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
 
+    # Force-disable fingerspelling regardless of flags or environment.
+    if not args.disable_fingerspelling:
+        print("Forzando disable_fingerspelling=True (requested by user)")
+    args.disable_fingerspelling = True
+
     lexicon = Path(args.lexicon)
     if not lexicon.exists():
         raise FileNotFoundError(f"Lexicon directory not found: {lexicon}")
@@ -111,7 +117,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         lexicon, args.spoken_language, args.signed_language
     )
 
-    sentences = _text_to_gloss(args.text, args.spoken_language, args.glosser)
+    glosser = args.glosser
+    if glosser == "llm" and not os.environ.get("OPENAI_API_KEY"):
+        print("No OPENAI_API_KEY found; falling back to the local 'simple' glosser.")
+        glosser = "simple"
+
+    sentences = _text_to_gloss(args.text, args.spoken_language, glosser)
     result = _gloss_to_pose(
         sentences,
         str(lexicon),

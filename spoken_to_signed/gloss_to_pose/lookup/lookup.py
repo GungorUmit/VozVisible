@@ -6,7 +6,6 @@ from typing import NamedTuple
 
 from pose_format import Pose
 
-from spoken_to_signed.gloss_to_pose.languages import LANGUAGE_BACKUP
 from spoken_to_signed.gloss_to_pose.lookup.lru_cache import LRUCache
 from spoken_to_signed.text_to_gloss.types import Gloss
 
@@ -61,8 +60,15 @@ class PoseLookup:
             raise ValueError("Can't access pose files without specifying a directory")
 
         pose_path = os.path.join(self.directory, pose_path)
-        with open(pose_path, "rb") as f:
-            return Pose.read(f.read())
+        try:
+            with open(pose_path, "rb") as f:
+                return Pose.read(f.read())
+        except FileNotFoundError:
+            # propagate as missing
+            raise
+        except Exception as e:
+            # If pose parsing fails (truncated/corrupt file), treat as missing
+            raise FileNotFoundError(f"Failed to read pose '{pose_path}': {e}")
 
     def get_pose(self, row):
         # Manage pose cache
@@ -71,8 +77,15 @@ class PoseLookup:
             pose = self.read_pose(row["path"])
             self.cache.set(row["path"], pose)
         pose = self.cache.get(row["path"])
+        # guard against invalid pose files with fps == 0
+        try:
+            fps = float(pose.body.fps)
+        except Exception:
+            raise FileNotFoundError(f"Invalid pose (no fps) for '{row['path']}')")
+        if fps == 0:
+            raise FileNotFoundError(f"Invalid pose (fps==0) for '{row['path']}'")
 
-        frame_time = 1000 / pose.body.fps
+        frame_time = 1000 / fps
         start_frame = math.floor(row["start"] // frame_time)
         end_frame = math.ceil(row["end"] // frame_time) if row["end"] > 0 else -1
         return Pose(pose.header, pose.body[start_frame:end_frame])
@@ -104,14 +117,6 @@ class PoseLookup:
                         if lower_term in dict_index[spoken_language][signed_language]:
                             rows = dict_index[spoken_language][signed_language][lower_term]
                             return PoseResult(pose=self.get_pose(self.get_best_row(rows, term)))
-
-        # Backup strategy: revert to backup sign language
-        if signed_language in LANGUAGE_BACKUP:
-            return self.lookup(word, gloss, spoken_language, LANGUAGE_BACKUP[signed_language], source)
-
-        # Backup strategy: revert to fingerspelling
-        if self.backup is not None:
-            return self.backup.lookup(word, gloss, spoken_language, signed_language, source)
 
         raise FileNotFoundError
 
